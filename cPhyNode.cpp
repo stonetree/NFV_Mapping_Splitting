@@ -45,3 +45,25 @@ cPhyNode& cPhyNode::operator=(const cPhyNode& _node)
 cPhyNode::~cPhyNode(void)
 {
 }
+
+int  cPhyNode::allocateResource(cVirtFuncApp& _vnf)
+{
+	residual -= _vnf.getResRequired();
+
+	if (residual < 0)
+	{
+		cout<<"Error, the residual resources is less than 0 at physical node "<<id<<endl;
+	}
+	return 0;
+}
+
+int cPhyNode::releaseResource(cVirtFuncApp& _vnf)
+{
+	residual += _vnf.getResRequired();
+
+	if (residual < 0)
+	{
+		cout<<"Error, the residual resources is more than the capacity at physical node "<<id<<endl;
+	}
+	return 0;
+}

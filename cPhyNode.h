@@ -1,5 +1,6 @@
 #pragma once
 #include "cVirtNode.h"
+#include "cVirtFuncApp.h"
 
 class cPhyLink;
 
@@ -20,6 +21,8 @@ public:
 
 public:
 	bool havingSufficientRes(res_unit _res_required){return _res_required <= residual;}
+	int  allocateResource(cVirtFuncApp& _vnf);
+	int  releaseResource(cVirtFuncApp& _vnf);
 
 public:
 	cPhyNode(void);

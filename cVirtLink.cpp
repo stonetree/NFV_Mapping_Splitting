@@ -28,6 +28,8 @@ cVirtLink& cVirtLink::operator=(const cVirtLink& _link)
 		this->endSrcPhyNode = _link.endSrcPhyNode;
 		this->endDesNode = _link.endDesNode;
 
+		this->linkWeight = _link.linkWeight;
+
 	}
 
 	return *this;

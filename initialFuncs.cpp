@@ -9,7 +9,7 @@
 #include "gsl/gsl_randist.h"
 
 
-int intialPhyTopology(vector<cPhyNode>* _p_phy_server_vec,vector<cPhyLink>* _p_phy_link_vec,cTopology* _p_phy_topology)
+int intialPhyTopology(cTopology* _p_phy_topology)
 {
 	const gsl_rng_type * T;
 	gsl_rng * r;
@@ -17,6 +17,9 @@ int intialPhyTopology(vector<cPhyNode>* _p_phy_server_vec,vector<cPhyLink>* _p_p
 	uint i,j;
 	double uniform_ran_num;
 	ID id;
+
+	_p_phy_topology->p_phyNode_map->clear();
+	_p_phy_topology->p_phyLink_map->clear();
 
 	gsl_rng_env_setup();
 	gsl_rng_default_seed = 10;
@@ -27,7 +30,7 @@ int intialPhyTopology(vector<cPhyNode>* _p_phy_server_vec,vector<cPhyLink>* _p_p
 	//Initial physical servers
 	for (index_phy_server = 0, id = 1;index_phy_server < total_phy_server;index_phy_server++,id++)
 	{
-		_p_phy_server_vec->push_back(cPhyNode(id,phy_server_capacity,phy_server_capacity));
+		_p_phy_topology->p_phyNode_map->insert(make_pair(id,cPhyNode(id,phy_server_capacity,phy_server_capacity)));
 	}
 	
 	//Initial physical links between physical links
@@ -42,19 +45,22 @@ int intialPhyTopology(vector<cPhyNode>* _p_phy_server_vec,vector<cPhyLink>* _p_p
 			{
 				//establish a link between node i and j;
 				cPhyLink tem_phy_link = cPhyLink(id,phy_link_capacity,phy_link_capacity);
-				tem_phy_link.setEndSrcPhyNode((&((*_p_phy_server_vec)[i])));
-				tem_phy_link.setEndSrcPhyNodeID(i+1);
-				tem_phy_link.setEndDesNode((&((*_p_phy_server_vec)[j])));
+				tem_phy_link.setEndSrcNode((&((*(_p_phy_topology->p_phyNode_map))[i+1])));
+				tem_phy_link.setEndSrcNodeID(i+1);
+				tem_phy_link.setEndDesNode((&((*(_p_phy_topology->p_phyNode_map))[j+1])));
 				tem_phy_link.setEndDesNodeID(j+1);
-				_p_phy_link_vec->push_back(tem_phy_link);
+				_p_phy_topology->p_phyLink_map->insert(make_pair(make_pair(i+1,j+1),tem_phy_link));
 				id++;
 			}
 		}
 	}
 	
-	vector<cPhyLink>::iterator iter_phy_link;
-	for (iter_phy_link = _p_phy_link_vec->begin();iter_phy_link!=_p_phy_link_vec->end();iter_phy_link++)
+
+	map<pair<ID,ID>,cPhyLink>::iterator iter_phy_link;
+	for (iter_phy_link = _p_phy_topology->p_phyLink_map->begin();iter_phy_link!=_p_phy_topology->p_phyLink_map->end();iter_phy_link++)
 	{
+		((cPhyNode*)(iter_phy_link->second.getEndSrcNode()))->adjacent_link_map.insert(make_pair(make_pair(((cPhyNode*)(iter_phy_link->second.getEndSrcNode()))->getId(),((cPhyNode*)(iter_phy_link->second.getEndDesNode()))->getId()),&(iter_phy_link->second)));
+		((cPhyNode*)(iter_phy_link->second.getEndDesNode()))->adjacent_link_map.insert(make_pair(make_pair(((cPhyNode*)(iter_phy_link->second.getEndDesNode()))->getId(),((cPhyNode*)(iter_phy_link->second.getEndSrcNode()))->getId()),&(iter_phy_link->second)));
 	}
 	
 	gsl_rng_free(r);

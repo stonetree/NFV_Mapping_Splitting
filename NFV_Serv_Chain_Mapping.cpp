@@ -20,6 +20,9 @@ const res_unit max_node_request_required = 20;
 const double arrival_rate = 5;
 const double departure_rate = 4;
 
+//the initial distance of each node when applying the shortest path algorithm
+const int max_distance = 100000;
+
 //The number of virtual network functions (vnf) is randomly distributed and chosen
 // and the max number of vnfs for each requests is defined as max_vnf
 uint const max_vnf = 5;
@@ -36,9 +39,9 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	//Initial physical topology
 	cTopology* p_phy_topology = new cTopology;
-	vector<cPhyNode>* p_phy_server_vec = new vector<cPhyNode>;
-	vector<cPhyLink>* p_phy_link_vec = new vector<cPhyLink>;
-	intialPhyTopology(p_phy_server_vec,p_phy_link_vec,p_phy_topology);
+	//vector<cPhyNode>* p_phy_server_vec = new vector<cPhyNode>;
+	//vector<cPhyLink>* p_phy_link_vec = new vector<cPhyLink>;
+	intialPhyTopology(p_phy_topology);
 
 	vector<cRequest>* p_requests_vec = new vector<cRequest>;
 	initialRequests(p_requests_vec);
@@ -56,18 +59,20 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			//a request arriving
 			//allocate resource
-			requestMapping(p_phy_topology,iter_event_mulmap->second.getRequestPoint());
+			requestAllocating(p_phy_topology,iter_event_mulmap->second.getRequestPoint());
 		}
 		else
 		{
 			//a request leaving
 			//release resource
-			releaseResource(iter_event_mulmap->second.getRequestPoint());
+			if ((iter_event_mulmap->second.getRequestPoint())->getIsService())
+			{
+				releaseResource(iter_event_mulmap->second.getRequestPoint());
+			}
 		}
 	}
 	
-	
-	
+	free(p_phy_topology);
 	return 0;
 }
 

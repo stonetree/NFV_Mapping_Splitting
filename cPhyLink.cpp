@@ -27,3 +27,15 @@ cPhyLink& cPhyLink::operator=(const cPhyLink& _link)
 cPhyLink::~cPhyLink(void)
 {
 }
+
+int cPhyLink::allcateResource(cAppChain& _app_chain)
+{
+	res_residual -= _app_chain.getResRequired();
+	return 0;
+}
+
+int cPhyLink::releaseResource(cAppChain& _app_chain)
+{
+	res_residual += _app_chain.getResRequired();
+	return 0;
+}

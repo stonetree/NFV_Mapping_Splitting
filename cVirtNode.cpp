@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 #include "cVirtNode.h"
 
-
 cVirtNode::cVirtNode(void)
 {
 }
@@ -18,12 +17,10 @@ cVirtNode& cVirtNode::operator=(const cVirtNode& _node)
 		this->id = _node.id;
 		this->preNodeID = _node.preNodeID;
 		this->preNodePoint = _node.preNodePoint;
+		this->nodeDistance = _node.nodeDistance;
 
-		this->adjacentLinkID_list.erase(adjacentLinkID_list.begin(),adjacentLinkID_list.end());
-		this->adjacentLinkID_list.assign(_node.adjacentLinkID_list.begin(),_node.adjacentLinkID_list.end());
-
-		this->adjacentLink_list.erase(adjacentLink_list.begin(),adjacentLink_list.end());
-		this->adjacentLink_list.assign(_node.adjacentLink_list.begin(),_node.adjacentLink_list.end());
+		this->adjacent_link_map.clear();
+		this->adjacent_link_map.insert(_node.adjacent_link_map.begin(),_node.adjacent_link_map.end());
 	}
 
 	return *this;

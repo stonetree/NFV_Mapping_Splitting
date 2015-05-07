@@ -20,6 +20,8 @@ public:
 
 public:
 	bool havingSufficientRes(res_unit _res_required){return _res_required <= res_residual;}
+	int  allcateResource(cAppChain& _app_chain);
+	int  releaseResource(cAppChain& _app_chain);
 
 public:
 	cPhyLink(void):cVirtLink(){}
