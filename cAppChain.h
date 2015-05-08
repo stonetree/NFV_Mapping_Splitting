@@ -23,8 +23,8 @@ public:
 public:
 	cAppChain(void);
 
-	cAppChain(ID _id,ID _request_id, ID _endSrcPhyNodeID, ID _endDesNodeID,res_unit _res_required,cVirtNode* _endSrcPhyNodePoint = NULL,cVirtNode* _endDesNodePoint = NULL)\
-		:cVirtLink(_id,_endSrcPhyNodeID,_endDesNodeID),res_required(_res_required),request_id(_request_id){}
+	cAppChain(ID _id,ID _request_id, ID _endSrcNodeID, ID _endDesNodeID,res_unit _res_required,cVirtNode* _endSrcNodePoint = NULL,cVirtNode* _endDesNodePoint = NULL)\
+		:cVirtLink(_id,_endSrcNodeID,_endDesNodeID,_endSrcNodePoint,_endDesNodePoint),res_required(_res_required),request_id(_request_id){}
 
 	cAppChain(const cAppChain& _app_chain);
 

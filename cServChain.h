@@ -6,8 +6,8 @@ class cServChain
 {
 
 public:
-	vector<cVirtFuncApp> vir_func_app;
-	vector<cAppChain> app_chain;
+	list<cVirtFuncApp> vir_func_app;
+	list<cAppChain> app_chain;
 
 public:
 	cServChain(void);

@@ -26,7 +26,11 @@ const int max_distance = 100000;
 //The number of virtual network functions (vnf) is randomly distributed and chosen
 // and the max number of vnfs for each requests is defined as max_vnf
 uint const max_vnf = 5;
+/************************************************************************/
 
+/************************************************************************/
+/* output metrics*/
+double accepted_rate = 0;
 /************************************************************************/
 
 /************************************************************************/
@@ -43,14 +47,14 @@ int _tmain(int argc, _TCHAR* argv[])
 	//vector<cPhyLink>* p_phy_link_vec = new vector<cPhyLink>;
 	intialPhyTopology(p_phy_topology);
 
-	vector<cRequest>* p_requests_vec = new vector<cRequest>;
-	initialRequests(p_requests_vec);
+	list<cRequest>* p_requests_list = new list<cRequest>;
+	initialRequests(p_requests_list);
 	
 	//establish an mapping from the ID to the point pointing the vnf or the app chain
-	establishGlobalIndex(p_requests_vec);
+	establishGlobalIndex(p_requests_list);
 
 	multimap<double,cEvent> event_mulmap;
-	initialEventList(p_requests_vec,event_mulmap);
+	initialEventList(p_requests_list,event_mulmap);
 
 	multimap<double,cEvent>::iterator iter_event_mulmap = event_mulmap.begin();
 	for (;iter_event_mulmap != event_mulmap.end();iter_event_mulmap++)
@@ -63,8 +67,8 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		else
 		{
-			//a request leaving
-			//release resource
+			//release the resources occupied by the request currently leaving
+			//first should check whether the request leaving event is triggered by an already served request.
 			if ((iter_event_mulmap->second.getRequestPoint())->getIsService())
 			{
 				releaseResource(iter_event_mulmap->second.getRequestPoint());
@@ -72,6 +76,13 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 	}
 	
+	list<cRequest>::iterator iter_request = p_requests_list->begin();
+	for (;iter_request != p_requests_list->end();iter_request++)
+	{
+		accepted_rate += (iter_request->getIsService()?1:0);
+	}
+	accepted_rate /= p_requests_list->size();
+
 	free(p_phy_topology);
 	return 0;
 }

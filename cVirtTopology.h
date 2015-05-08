@@ -8,7 +8,7 @@ class cVirtTopology
 
 public:
 	map<ID,cVirtNode>* p_virtNode_map;
-	map<ID,cVirtLink>* p_virtLink_map;
+	map<pair<ID,ID>,cVirtLink>* p_virtLink_map;
 
 public:
 	int findShortestPath(cVirtNode* _p_src_node, cVirtNode* _p_des_node,vector<cVirtNode*>& _path);

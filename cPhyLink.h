@@ -26,8 +26,8 @@ public:
 public:
 	cPhyLink(void):cVirtLink(){}
 
-	cPhyLink(ID _id, res_unit _capacity,res_unit _residual,ID _endSrcPhyNodeID = 0, ID _endDesNodeID = 0,cPhyNode* _endSrcPhyNode = NULL, cPhyNode* _endDesNode = NULL)\
-		:cVirtLink(_id, _endSrcPhyNodeID, _endDesNodeID, (cVirtNode*)_endSrcPhyNode,(cVirtNode*)_endDesNode),res_capacity(_capacity),res_residual(_residual){}
+	cPhyLink(ID _id, res_unit _capacity,res_unit _residual,ID _endSrcNodeID = 0, ID _endDesNodeID = 0,cPhyNode* _endSrcNode = NULL, cPhyNode* _endDesNode = NULL)\
+		:cVirtLink(_id, _endSrcNodeID, _endDesNodeID, (cVirtNode*)_endSrcNode,(cVirtNode*)_endDesNode),res_capacity(_capacity),res_residual(_residual){}
 
 	cPhyLink(const cPhyLink& _link){operator=(_link);}
 

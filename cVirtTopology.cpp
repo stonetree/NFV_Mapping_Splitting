@@ -5,7 +5,7 @@
 cVirtTopology::cVirtTopology(void)
 {
 	p_virtNode_map = new map<ID,cVirtNode>;
-	p_virtLink_map = new map<ID,cVirtLink>;
+	p_virtLink_map = new map<pair<ID,ID>,cVirtLink>;
 }
 
 cVirtTopology::~cVirtTopology(void)
@@ -28,7 +28,7 @@ cVirtTopology& cVirtTopology::operator=(const cVirtTopology& _topo)
 		//this->plink = _topo.plink;
 
 		p_virtNode_map = new map<ID,cVirtNode>;
-		p_virtLink_map = new map<ID,cVirtLink>;
+		p_virtLink_map = new map<pair<ID,ID>,cVirtLink>;
 
 		this->p_virtNode_map->erase(p_virtNode_map->begin(),p_virtNode_map->end());
 		this->p_virtNode_map->insert(_topo.p_virtNode_map->begin(),_topo.p_virtNode_map->end());
@@ -41,13 +41,13 @@ cVirtTopology& cVirtTopology::operator=(const cVirtTopology& _topo)
 }
 
 
-cVirtLink* isDuplicate(vector<cVirtLink>& _virtLink_vec,int _endSrcPhyNodeID,int _endDesNodeID)
+cVirtLink* isDuplicate(vector<cVirtLink>& _virtLink_vec,int _endSrcNodeID,int _endDesNodeID)
 {
 	vector<cVirtLink>::iterator iter_virtLink_vec = _virtLink_vec.begin();
 
 	for (;iter_virtLink_vec!=_virtLink_vec.end();iter_virtLink_vec++)
 	{
-		if (iter_virtLink_vec->getEndSrcNodeID() == _endSrcPhyNodeID && iter_virtLink_vec->getEndDesNodeID() == _endDesNodeID)
+		if (iter_virtLink_vec->getEndSrcNodeID() == _endSrcNodeID && iter_virtLink_vec->getEndDesNodeID() == _endDesNodeID)
 			return &(*iter_virtLink_vec);
 	}
 	return NULL;

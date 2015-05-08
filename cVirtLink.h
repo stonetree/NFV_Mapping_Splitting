@@ -6,9 +6,9 @@ class cVirtLink
 {
 protected:
 	ID id;
-	ID endSrcPhyNodeID;
+	ID endSrcNodeID;
 	ID endDesNodeID;
-	cVirtNode* endSrcPhyNode;
+	cVirtNode* endSrcNode;
 	cVirtNode* endDesNode;
 	int linkWeight;
 	bool available;
@@ -17,14 +17,14 @@ public:
 	void setId(ID _id){id = _id;}
 	ID getId(void) const {return id;}
 
-	void setEndSrcNodeID(ID _id) {endSrcPhyNodeID = _id;}
-	ID   getEndSrcNodeID(void) const {return endSrcPhyNodeID;}
+	void setEndSrcNodeID(ID _id) {endSrcNodeID = _id;}
+	ID   getEndSrcNodeID(void) const {return endSrcNodeID;}
 
 	void setEndDesNodeID(ID _id) {endDesNodeID = _id;}
 	ID   getEndDesNodeID(void) const {return endDesNodeID;}
 
-	void setEndSrcNode(void* _pnode){endSrcPhyNode = (cVirtNode*)_pnode;}
-	void* getEndSrcNode(void) const {return endSrcPhyNode;}
+	void setEndSrcNode(void* _pnode){endSrcNode = (cVirtNode*)_pnode;}
+	void* getEndSrcNode(void) const {return endSrcNode;}
 
 	void setEndDesNode(void* _pnode){endDesNode = (cVirtNode*)_pnode;}
 	void* getEndDesNode(void) const {return endDesNode;}
@@ -38,8 +38,8 @@ public:
 public:
 	cVirtLink(void);
 	~cVirtLink(void);
-	cVirtLink(ID _id, ID _endSrcPhyNodeID, ID _endDesNodeID,void* _endSrcPhyNodePoint = NULL,void* _endDesNodePoint = NULL,int _link_weight = 1,bool _available = true)\
-		:id(_id),endSrcPhyNodeID(_endSrcPhyNodeID),endDesNodeID(_endDesNodeID),endSrcPhyNode((cVirtNode*)_endSrcPhyNodePoint),endDesNode((cVirtNode*)_endDesNodePoint),linkWeight(_link_weight),available(_available){}
+	cVirtLink(ID _id, ID _endSrcNodeID, ID _endDesNodeID,void* _endSrcNodePoint = NULL,void* _endDesNodePoint = NULL,int _link_weight = 1,bool _available = true)\
+		:id(_id),endSrcNodeID(_endSrcNodeID),endDesNodeID(_endDesNodeID),endSrcNode((cVirtNode*)_endSrcNodePoint),endDesNode((cVirtNode*)_endDesNodePoint),linkWeight(_link_weight),available(_available){}
 	cVirtLink(const cVirtLink& _link);
 	cVirtLink & operator=(const cVirtLink& _link);
 };

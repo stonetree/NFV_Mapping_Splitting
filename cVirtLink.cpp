@@ -22,10 +22,10 @@ cVirtLink& cVirtLink::operator=(const cVirtLink& _link)
 	{
 		this->id = _link.id;
 
-		this->endSrcPhyNodeID = _link.endSrcPhyNodeID;
+		this->endSrcNodeID = _link.endSrcNodeID;
 		this->endDesNodeID = _link.endDesNodeID;
 
-		this->endSrcPhyNode = _link.endSrcPhyNode;
+		this->endSrcNode = _link.endSrcNode;
 		this->endDesNode = _link.endDesNode;
 
 		this->linkWeight = _link.linkWeight;

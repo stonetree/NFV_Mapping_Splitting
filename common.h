@@ -27,18 +27,22 @@ extern const int max_distance;
 /************************************************************************/
 
 /************************************************************************/
+/* output metrics*/
+extern double accepted_rate;
+/************************************************************************/
+
+/************************************************************************/
 /* Global variables*/
 extern map<ID,cVirtFuncApp*> vnf_index_map;
 extern map<ID,cAppChain*> app_chain_index_map;
 /************************************************************************/
 
-
 /************************************************************************/
 /* functions*/
 extern int intialPhyTopology(cTopology* _p_phy_topology);
-extern int initialRequests(vector<cRequest>* _p_requests);
-extern int establishGlobalIndex(vector<cRequest>* _p_requests_vec);
-extern int initialEventList(vector<cRequest>* _p_requests_vec,multimap<double,cEvent>& _event_vec);
+extern int initialRequests(list<cRequest>* _p_requests);
+extern int establishGlobalIndex(list<cRequest>* _p_requests_list);
+extern int initialEventList(list<cRequest>* _p_requests_list,multimap<double,cEvent>& _event_vec);
 extern int requestAllocating(cTopology* _topo,cRequest* _request);
 extern int releaseResource(cRequest* _request);
 /************************************************************************/

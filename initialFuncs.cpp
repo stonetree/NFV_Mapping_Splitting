@@ -68,7 +68,7 @@ int intialPhyTopology(cTopology* _p_phy_topology)
 	return 0;
 }
 
-int initialRequests(vector<cRequest>* _p_requests)
+int initialRequests(list<cRequest>* _p_requests)
 {
 
 	const gsl_rng_type * T;
@@ -117,23 +117,25 @@ int initialRequests(vector<cRequest>* _p_requests)
 			vnf_id++;
 		}
 
+		_p_requests->push_back(tem_request);
+		list<cRequest>::reverse_iterator riter_request = _p_requests->rbegin();
+		cRequest& request = *riter_request;
 		//initial each app chain
-		vector<cVirtFuncApp>::iterator iter_vnf;
-		for (iter_vnf = tem_request.vir_func_app.begin();iter_vnf != tem_request.vir_func_app.end() - 1;iter_vnf++)
+		list<cVirtFuncApp>::iterator iter_vnf = request.vir_func_app.begin();
+		list<cVirtFuncApp>::iterator iter_next_vnf = iter_vnf;
+		iter_next_vnf++;
+		for (;iter_next_vnf != request.vir_func_app.end();iter_vnf++,iter_next_vnf++)
 		{
-			vector<cVirtFuncApp>::iterator iter_next_vnf = iter_vnf + 1;
 			app_chain_resource_required = 0;
 			while (app_chain_resource_required<1)
 			{
 				app_chain_resource_required = (res_unit)(gsl_rng_uniform(r_vnf_resource_required)*max_link_request_required);
 			}
 
-			cAppChain tem_app_chain = cAppChain(app_chain_id,(ID)(reques_index+1),iter_vnf->getId(),iter_next_vnf->getId(),app_chain_resource_required);
-			tem_request.app_chain.push_back(tem_app_chain);
+			cAppChain tem_app_chain = cAppChain(app_chain_id,(ID)(reques_index+1),iter_vnf->getId(),iter_next_vnf->getId(),app_chain_resource_required,(cVirtNode*)(&(*iter_vnf)),(cVirtNode*)(&(*iter_next_vnf)));
+			request.app_chain.push_back(tem_app_chain);
 			app_chain_id++;
 		}
-
-		_p_requests->push_back(tem_request);
 	}
 
 
@@ -149,23 +151,23 @@ int initialRequests(vector<cRequest>* _p_requests)
 	return 0;
 }
 
-int establishGlobalIndex(vector<cRequest>* _p_requests_vec)
+int establishGlobalIndex(list<cRequest>* _p_requests_list)
 {
-	vector<cRequest>::iterator iter_request_vec;
-	vector<cVirtFuncApp>::iterator iter_vnf_vec;
-	vector<cAppChain>::iterator iter_app_chain_vec;
+	list<cRequest>::iterator iter_request_list;
+	list<cVirtFuncApp>::iterator iter_vnf_vec;
+	list<cAppChain>::iterator iter_app_chain_vec;
 
 	vnf_index_map.clear();
 	app_chain_index_map.clear();
 
-	for (iter_request_vec = _p_requests_vec->begin();iter_request_vec != _p_requests_vec->end();iter_request_vec++)
+	for (iter_request_list = _p_requests_list->begin();iter_request_list != _p_requests_list->end();iter_request_list++)
 	{
-		for (iter_vnf_vec = iter_request_vec->vir_func_app.begin();iter_vnf_vec != iter_request_vec->vir_func_app.end();iter_vnf_vec++)
+		for (iter_vnf_vec = iter_request_list->vir_func_app.begin();iter_vnf_vec != iter_request_list->vir_func_app.end();iter_vnf_vec++)
 		{
 			vnf_index_map.insert(make_pair(iter_vnf_vec->getId(),&(*iter_vnf_vec)));
 		}
 
-		for (iter_app_chain_vec = iter_request_vec->app_chain.begin();iter_app_chain_vec != iter_request_vec->app_chain.end();iter_app_chain_vec++)
+		for (iter_app_chain_vec = iter_request_list->app_chain.begin();iter_app_chain_vec != iter_request_list->app_chain.end();iter_app_chain_vec++)
 		{
 			app_chain_index_map.insert(make_pair(iter_app_chain_vec->getId(),&(*iter_app_chain_vec)));
 		}
@@ -174,15 +176,15 @@ int establishGlobalIndex(vector<cRequest>* _p_requests_vec)
 	return 0;
 }
 
-int initialEventList(vector<cRequest>* _p_requests_vec,multimap<double,cEvent>& _event_vec)
+int initialEventList(list<cRequest>* _p_requests_list,multimap<double,cEvent>& _event_vec)
 {
 	_event_vec.clear();
 
-	vector<cRequest>::iterator iter_request_vec = _p_requests_vec->begin();
-	for (;iter_request_vec != _p_requests_vec->end();iter_request_vec++)
+	list<cRequest>::iterator iter_request_list = _p_requests_list->begin();
+	for (;iter_request_list != _p_requests_list->end();iter_request_list++)
 	{
-		_event_vec.insert(make_pair(iter_request_vec->getArrivalTime(),cEvent(ARRIVING,&(*iter_request_vec))));
-		_event_vec.insert(make_pair(iter_request_vec->getArrivalTime()+iter_request_vec->getDuringTime(),cEvent(LEAVING,&(*iter_request_vec))));
+		_event_vec.insert(make_pair(iter_request_list->getArrivalTime(),cEvent(ARRIVING,&(*iter_request_list))));
+		_event_vec.insert(make_pair(iter_request_list->getArrivalTime()+iter_request_list->getDuringTime(),cEvent(LEAVING,&(*iter_request_list))));
 	}
 	
 	return 0;

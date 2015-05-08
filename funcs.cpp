@@ -59,7 +59,7 @@ int nodeRanking(cTopology* _topo, multimap<res_unit, cPhyNode*>& _node_ranking_m
 
 int requestRearranging(cRequest* _request,multimap<res_unit,cVirtFuncApp*>& _vnf_ranking_mulmap)
 {
-	vector<cVirtFuncApp>::iterator iter_vnf_vec = _request->vir_func_app.begin();
+	list<cVirtFuncApp>::iterator iter_vnf_vec = _request->vir_func_app.begin();
 	for (;iter_vnf_vec != _request->vir_func_app.end();iter_vnf_vec++)
 	{
 		_vnf_ranking_mulmap.insert(make_pair(iter_vnf_vec->getResRequired(),&(*iter_vnf_vec)));
@@ -188,15 +188,22 @@ int linkMapping(cRequest* _request,cTopology* _topo)
 	vector<res_unit>* p_store_residual  = new vector<res_unit>;
 	storeTopoInfo(_topo,p_store_residual);
 
-	vector<cAppChain>::iterator iter_app_chain = _request->app_chain.begin();	
-	vector<cVirtFuncApp>::iterator iter_vnf = _request->vir_func_app.begin();
-	vector<cVirtFuncApp>::iterator iter_next_vnf = iter_vnf + 1;
-	while(iter_next_vnf != _request->vir_func_app.end())
+	//the link having the most number of resources required will be processed first
+	multimap<res_unit,cAppChain*> p_app_chain_mulmap;
+	list<cAppChain>::iterator iter_app_chain = _request->app_chain.begin();	
+	for (;iter_app_chain != _request->app_chain.end();iter_app_chain++)
+	{
+		p_app_chain_mulmap.insert(make_pair(iter_app_chain->getResRequired(),&(*iter_app_chain)));
+	}
+
+	multimap<res_unit,cAppChain*>::reverse_iterator riter_p_app_chain_mulmap = p_app_chain_mulmap.rbegin();
+	for (;riter_p_app_chain_mulmap != p_app_chain_mulmap.rend();riter_p_app_chain_mulmap++)
 	{
 		vector<cPhyNode*> path;
-		_topo->updateAvailableLink(*iter_app_chain);
-		cPhyNode* p_start_node = iter_vnf->getHostServerPoint();
-		cPhyNode* p_end_node = iter_next_vnf->getHostServerPoint();
+		_topo->updateAvailableLink(*(riter_p_app_chain_mulmap->second));
+		((cVirtFuncApp*)(riter_p_app_chain_mulmap->second->getEndSrcNode()));
+		cPhyNode* p_start_node = ((cVirtFuncApp*)(riter_p_app_chain_mulmap->second->getEndSrcNode()))->getHostServerPoint();
+		cPhyNode* p_end_node = ((cVirtFuncApp*)(riter_p_app_chain_mulmap->second->getEndDesNode()))->getHostServerPoint();
 		if (!_topo->findShortestPath(p_start_node,p_end_node,path))
 		{
 			//find an available path
@@ -205,9 +212,7 @@ int linkMapping(cRequest* _request,cTopology* _topo)
 			//update the residual resource of each physical link
 			updateResidualResource(_topo,*iter_app_chain);	
 
-			iter_vnf++;
-			iter_next_vnf++;
-			iter_app_chain++;
+			riter_p_app_chain_mulmap++;
 		}
 		else
 		{
@@ -217,6 +222,35 @@ int linkMapping(cRequest* _request,cTopology* _topo)
 			return 1;
 		}
 	}
+
+	//list<cVirtFuncApp>::iterator iter_vnf = _request->vir_func_app.begin();
+	//list<cVirtFuncApp>::iterator iter_next_vnf = iter_vnf + 1;
+	//while(iter_next_vnf != _request->vir_func_app.end())
+	//{
+	//	vector<cPhyNode*> path;
+	//	_topo->updateAvailableLink(*iter_app_chain);
+	//	cPhyNode* p_start_node = iter_vnf->getHostServerPoint();
+	//	cPhyNode* p_end_node = iter_next_vnf->getHostServerPoint();
+	//	if (!_topo->findShortestPath(p_start_node,p_end_node,path))
+	//	{
+	//		//find an available path
+	//		updateHostLink(_topo,iter_app_chain->p_host_link_vec,path);
+
+	//		//update the residual resource of each physical link
+	//		updateResidualResource(_topo,*iter_app_chain);	
+
+	//		iter_vnf++;
+	//		iter_next_vnf++;
+	//		iter_app_chain++;
+	//	}
+	//	else
+	//	{
+	//		//can not find an available path 
+	//		restoreTopoInfo(_topo,p_store_residual);
+	//		free(p_store_residual);
+	//		return 1;
+	//	}
+	//}
 	
 	//restore the stored residual resource info
 	restoreTopoInfo(_topo,p_store_residual);
@@ -238,18 +272,19 @@ int requestMapping(cRequest* _request,cTopology* _topo)
 		}
 	}
 	
+	//fail to map the currently arrived request onto the substrate network
 	return 1;
 }
 
 int allocateResource(cRequest* _request)
 {
-	vector<cVirtFuncApp>::iterator iter_vnf = _request->vir_func_app.begin();
+	list<cVirtFuncApp>::iterator iter_vnf = _request->vir_func_app.begin();
 	for (;iter_vnf != _request->vir_func_app.end();iter_vnf++)
 	{
 		(iter_vnf->getHostServerPoint())->allocateResource((*iter_vnf));
 	}
 
-	vector<cAppChain>::iterator iter_app_chain = _request->app_chain.begin();
+	list<cAppChain>::iterator iter_app_chain = _request->app_chain.begin();
 	for (;iter_app_chain != _request->app_chain.end();iter_app_chain++)
 	{
 		vector<cPhyLink*>::iterator iter_host_phy_link = iter_app_chain->p_host_link_vec.begin();
