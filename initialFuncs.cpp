@@ -20,6 +20,12 @@ int intialPhyTopology(cTopology* _p_phy_topology)
 
 	_p_phy_topology->p_phyNode_map->clear();
 	_p_phy_topology->p_phyLink_map->clear();
+	
+	_p_phy_topology->used_phyNode_point_map.clear();
+	_p_phy_topology->used_phyLink_point_map.clear();
+
+	_p_phy_topology->unused_phyNode_point_map.clear();
+	_p_phy_topology->unused_phyLink_point_map.clear();
 
 	gsl_rng_env_setup();
 	gsl_rng_default_seed = 10;
@@ -61,6 +67,20 @@ int intialPhyTopology(cTopology* _p_phy_topology)
 	{
 		((cPhyNode*)(iter_phy_link->second.getEndSrcNode()))->adjacent_link_map.insert(make_pair(make_pair(((cPhyNode*)(iter_phy_link->second.getEndSrcNode()))->getId(),((cPhyNode*)(iter_phy_link->second.getEndDesNode()))->getId()),&(iter_phy_link->second)));
 		((cPhyNode*)(iter_phy_link->second.getEndDesNode()))->adjacent_link_map.insert(make_pair(make_pair(((cPhyNode*)(iter_phy_link->second.getEndDesNode()))->getId(),((cPhyNode*)(iter_phy_link->second.getEndSrcNode()))->getId()),&(iter_phy_link->second)));
+	}
+	
+	map<ID,cPhyNode>::iterator iter_phy_node = _p_phy_topology->p_phyNode_map->begin();
+	for (;iter_phy_node != _p_phy_topology->p_phyNode_map->end();iter_phy_node++)
+	{
+		_p_phy_topology->p_phyNode_point_map.insert(make_pair(iter_phy_node->second.getId(),&(iter_phy_node->second)));
+		_p_phy_topology->unused_phyNode_point_map.insert(make_pair(iter_phy_node->second.getId(),&(iter_phy_node->second)));
+	}
+
+	iter_phy_link = _p_phy_topology->p_phyLink_map->begin();
+	for (;iter_phy_link != _p_phy_topology->p_phyLink_map->end();iter_phy_link++)
+	{
+		_p_phy_topology->p_phyLink_point_map.insert(make_pair(make_pair(iter_phy_link->second.getEndSrcNodeID(),iter_phy_link->second.getEndDesNodeID()),&(iter_phy_link->second)));
+		_p_phy_topology->unused_phyLink_point_map.insert(make_pair(make_pair(iter_phy_link->second.getEndSrcNodeID(),iter_phy_link->second.getEndDesNodeID()),&(iter_phy_link->second)));
 	}
 	
 	gsl_rng_free(r);

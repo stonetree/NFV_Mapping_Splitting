@@ -31,11 +31,23 @@ cPhyLink::~cPhyLink(void)
 int cPhyLink::allcateResource(cAppChain& _app_chain)
 {
 	res_residual -= _app_chain.getResRequired();
+	if (res_residual < 0)
+	{
+		cout<<"Error!!! The number of residual resources is less than 0"<<endl;
+		cout<<"The ID of app chain is "<<_app_chain.getResquestID()<<" "<<"and the request ID is "<<_app_chain.getResquestID()<<endl;
+		exit(0);
+	}
 	return 0;
 }
 
 int cPhyLink::releaseResource(cAppChain& _app_chain)
 {
 	res_residual += _app_chain.getResRequired();
+	if (res_residual > res_capacity)
+	{
+		cout<<"Error!!! The number of residual resources is more than the capacity"<<endl;
+		cout<<"The ID of app chain is "<<_app_chain.getResquestID()<<" "<<"and the request ID is "<<_app_chain.getResquestID()<<endl;
+		exit(0);
+	}
 	return 0;
 }

@@ -29,6 +29,9 @@ cVirtLink& cVirtLink::operator=(const cVirtLink& _link)
 		this->endDesNode = _link.endDesNode;
 
 		this->linkWeight = _link.linkWeight;
+		this->available = _link.available;
+
+		this->parentID = _link.parentID;
 
 	}
 

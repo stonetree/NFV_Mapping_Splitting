@@ -24,6 +24,8 @@ extern const res_unit max_node_request_required;
 extern const double arrival_rate;
 extern const double departure_rate;
 extern const int max_distance;
+extern const bool splitting;
+extern const uint max_splitting_piece;
 /************************************************************************/
 
 /************************************************************************/
@@ -44,7 +46,8 @@ extern int initialRequests(list<cRequest>* _p_requests);
 extern int establishGlobalIndex(list<cRequest>* _p_requests_list);
 extern int initialEventList(list<cRequest>* _p_requests_list,multimap<double,cEvent>& _event_vec);
 extern int requestAllocating(cTopology* _topo,cRequest* _request);
-extern int releaseResource(cRequest* _request);
+//extern int requestAllocatingwithSplitting(cTopology* _topo,cRequest* _request);
+extern int releaseResource(cTopology* _topo,cRequest* _request);
 /************************************************************************/
 
 

@@ -20,6 +20,13 @@ const res_unit max_node_request_required = 20;
 const double arrival_rate = 5;
 const double departure_rate = 4;
 
+//whether the resource splitting is used or not
+//true->used;false->not used
+const bool splitting = false;
+
+//maximum number of sub function pieces for each vnf after being split
+const uint max_splitting_piece = 2;
+
 //the initial distance of each node when applying the shortest path algorithm
 const int max_distance = 100000;
 
@@ -64,6 +71,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			//a request arriving
 			//allocate resource
 			requestAllocating(p_phy_topology,iter_event_mulmap->second.getRequestPoint());
+			//requestAllocatingwithSplitting(p_phy_topology,iter_event_mulmap->second.getRequestPoint());
 		}
 		else
 		{
@@ -71,7 +79,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			//first should check whether the request leaving event is triggered by an already served request.
 			if ((iter_event_mulmap->second.getRequestPoint())->getIsService())
 			{
-				releaseResource(iter_event_mulmap->second.getRequestPoint());
+				releaseResource(p_phy_topology,iter_event_mulmap->second.getRequestPoint());
 			}
 		}
 	}

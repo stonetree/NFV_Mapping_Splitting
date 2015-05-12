@@ -18,6 +18,7 @@ cVirtNode& cVirtNode::operator=(const cVirtNode& _node)
 		this->preNodeID = _node.preNodeID;
 		this->preNodePoint = _node.preNodePoint;
 		this->nodeDistance = _node.nodeDistance;
+		this->parentID = _node.parentID;
 
 		this->adjacent_link_map.clear();
 		this->adjacent_link_map.insert(_node.adjacent_link_map.begin(),_node.adjacent_link_map.end());

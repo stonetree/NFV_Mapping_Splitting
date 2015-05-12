@@ -28,12 +28,51 @@ cTopology& cTopology::operator=(const cTopology& _topo)
 
 		p_phyNode_map = new map<ID,cPhyNode>;
 		p_phyLink_map = new map<pair<ID,ID>,cPhyLink>;
+
+		p_phyNode_point_map.clear();
+		p_phyLink_point_map.clear();
+
+		used_phyNode_point_map.clear();
+		used_phyLink_point_map.clear();
+
+		unused_phyNode_point_map.clear();
+		unused_phyLink_point_map.clear();
 		
 		this->p_phyNode_map->erase(p_phyNode_map->begin(),p_phyNode_map->end());
 		this->p_phyNode_map->insert(_topo.p_phyNode_map->begin(),_topo.p_phyNode_map->end());
 
 		this->p_phyLink_map->erase(p_phyLink_map->begin(),p_phyLink_map->end());
 		this->p_phyLink_map->insert(_topo.p_phyLink_map->begin(),_topo.p_phyLink_map->end());
+
+		map<ID,cPhyNode>::iterator iter_phyNode = p_phyNode_map->begin();
+		for (;iter_phyNode != p_phyNode_map->end();iter_phyNode++)
+		{
+			p_phyNode_point_map.insert(make_pair(iter_phyNode->second.getId(),&(iter_phyNode->second)));
+			if (iter_phyNode->second.getResidual() < iter_phyNode->second.getCapacity())
+			{
+				used_phyNode_point_map.insert(make_pair(iter_phyNode->second.getId(),&(iter_phyNode->second)));
+			}
+			else
+			{
+				unused_phyNode_point_map.insert(make_pair(iter_phyNode->second.getId(),&(iter_phyNode->second)));
+			}
+		}
+
+		map<pair<ID,ID>,cPhyLink>::iterator iter_phyLink = p_phyLink_map->begin();
+		for (;iter_phyLink != p_phyLink_map->end();iter_phyLink++)
+		{
+			p_phyLink_point_map.insert(make_pair(make_pair(iter_phyLink->second.getEndSrcNodeID(),iter_phyLink->second.getEndDesNodeID()),&(iter_phyLink->second)));
+			if (iter_phyLink->second.getResidual() < iter_phyLink->second.getCapacity())
+			{
+				used_phyLink_point_map.insert(make_pair(make_pair(iter_phyLink->second.getEndSrcNodeID(),iter_phyLink->second.getEndDesNodeID()),&(iter_phyLink->second)));
+			}
+			else
+			{
+				unused_phyLink_point_map.insert(make_pair(make_pair(iter_phyLink->second.getEndSrcNodeID(),iter_phyLink->second.getEndDesNodeID()),&(iter_phyLink->second)));
+			}
+		}
+
+		
 	}
 
 	return *this;

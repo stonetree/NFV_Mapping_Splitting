@@ -18,6 +18,15 @@ public:
 	map<ID,cPhyNode>* p_phyNode_map;
 	map<pair<ID,ID>,cPhyLink>* p_phyLink_map;
 
+	map<ID,cPhyNode*> p_phyNode_point_map;
+	map<pair<ID,ID>,cPhyLink*> p_phyLink_point_map;
+
+	map<ID,cPhyNode*> used_phyNode_point_map;
+	map<pair<ID,ID>,cPhyLink*> used_phyLink_point_map;
+
+	map<ID,cPhyNode*> unused_phyNode_point_map;
+	map<pair<ID,ID>,cPhyLink*> unused_phyLink_point_map;
+
 public:
 	int findShortestPath(cPhyNode* _p_src_node, cPhyNode* _p_des_node,vector<cPhyNode*>& _path);
 	int outputShortestPath(cPhyNode* _pnode,vector<cPhyNode*>& _path);
