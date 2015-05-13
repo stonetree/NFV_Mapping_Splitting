@@ -22,7 +22,7 @@ const double departure_rate = 4;
 
 //whether the resource splitting is used or not
 //true->used;false->not used
-const bool splitting = false;
+const bool splitting = true;
 
 //maximum number of sub function pieces for each vnf after being split
 const uint max_splitting_piece = 2;

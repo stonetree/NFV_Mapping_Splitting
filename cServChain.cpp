@@ -20,6 +20,14 @@ cServChain& cServChain::operator=(const cServChain& _service_chain)
 
 		app_chain.clear();
 		app_chain.assign(_service_chain.app_chain.begin(),_service_chain.app_chain.end());
+
+		vnf_chain_map.clear();
+
+		list<cAppChain>::iterator iter_app_chain_list = app_chain.begin();
+		for (;iter_app_chain_list != app_chain.end();iter_app_chain_list++)
+		{
+			vnf_chain_map.insert(make_pair(make_pair(iter_app_chain_list->getEndSrcNodeID(),iter_app_chain_list->getEndDesNodeID()),&(*iter_app_chain_list)));
+		}
 	}
 
 	return *this;

@@ -19,7 +19,7 @@
 
 
 typedef unsigned int ID;
-typedef int res_unit;
+typedef double res_unit;
 typedef unsigned int uint;
 
 using namespace std;

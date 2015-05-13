@@ -10,6 +10,7 @@ private:
 	ID request_id;
 	int virtFuncApptype;
 	res_unit res_required;
+	bool is_split;
 
 	ID host_server_id;
 	cPhyNode* p_host_server;
@@ -31,12 +32,15 @@ public:
 	void setHostServerPoint(cPhyNode* _p_host_server){p_host_server = _p_host_server;}
 	cPhyNode* getHostServerPoint(void){return p_host_server;}
 
+	void setSplit(bool _split){is_split = _split;}
+	bool isSplit(void){return is_split;}
+
 public:
 	cVirtFuncApp(void);
 
 	cVirtFuncApp(ID _id,ID _request_id,int _vir_func_type,res_unit _res_required)\
 		:request_id(_request_id),virtFuncApptype(_vir_func_type),res_required(_res_required),cVirtNode(_id),\
-	host_server_id(0),p_host_server(NULL){}
+	host_server_id(0),p_host_server(NULL),is_split(false){}
 
 	cVirtFuncApp(const cVirtFuncApp& _virtFuncApp);
 

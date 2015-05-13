@@ -9,6 +9,8 @@ public:
 	list<cVirtFuncApp> vir_func_app;
 	list<cAppChain> app_chain;
 
+	map<pair<ID,ID>,cAppChain*> vnf_chain_map;
+
 public:
 	cServChain(void);
 

@@ -117,6 +117,8 @@ int initialRequests(list<cRequest>* _p_requests)
 
 	for (reques_index = 0;reques_index < total_requests;reques_index++)
 	{
+		vnf_id = 1;
+		app_chain_id = 1;
 		//initial each vnf
 		duraiton_time = gsl_ran_exponential(r_duration_time,1/departure_rate);
 		cRequest tem_request = cRequest((ID)(reques_index+1),arrive_time,duraiton_time);
@@ -133,7 +135,7 @@ int initialRequests(list<cRequest>* _p_requests)
 			{
 				vnf_resource_required = (res_unit)(gsl_rng_uniform(r_vnf_resource_required)*max_node_request_required);
 			}
-			tem_request.vir_func_app.push_back(cVirtFuncApp(vnf_id,(ID)(reques_index+1),vnf_types,vnf_resource_required));
+			tem_request.vir_func_app.push_back(cVirtFuncApp(vnf_id,(ID)(reques_index+1),vnf_types,vnf_resource_required + 100));
 			vnf_id++;
 		}
 
@@ -156,8 +158,16 @@ int initialRequests(list<cRequest>* _p_requests)
 			request.app_chain.push_back(tem_app_chain);
 			app_chain_id++;
 		}
-	}
 
+		list<cAppChain>::iterator iter_app_chain = request.app_chain.begin();
+		for (;iter_app_chain != request.app_chain.end();iter_app_chain++)
+		{
+			//request.vnf_chain_map.insert(make_pair(make_pair(iter_app_chain->getEndSrcNodeID(),iter_app_chain->getEndDesNodeID()),&(*iter_app_chain)));
+			
+			((cVirtNode*)(iter_app_chain->getEndSrcNode()))->adjacent_link_map.insert(make_pair(make_pair(((cVirtNode*)(iter_app_chain->getEndSrcNode()))->getId(),((cVirtNode*)(iter_app_chain->getEndDesNode()))->getId()),(cVirtLink*)&(iter_app_chain)));
+			((cVirtNode*)(iter_app_chain->getEndDesNode()))->adjacent_link_map.insert(make_pair(make_pair(((cVirtNode*)(iter_app_chain->getEndSrcNode()))->getId(),((cVirtNode*)(iter_app_chain->getEndDesNode()))->getId()),(cVirtLink*)&(iter_app_chain)));
+		}
+	}
 
 
 

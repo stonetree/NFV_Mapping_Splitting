@@ -25,6 +25,7 @@ cVirtFuncApp& cVirtFuncApp::operator=(const cVirtFuncApp& _virtFuncApp)
 		request_id = _virtFuncApp.request_id;
 		virtFuncApptype = _virtFuncApp.virtFuncApptype;
 		res_required = _virtFuncApp.res_required;
+		is_split = _virtFuncApp.is_split;
 
 		host_server_id = _virtFuncApp.host_server_id;
 		p_host_server = _virtFuncApp.p_host_server;

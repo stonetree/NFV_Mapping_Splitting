@@ -52,7 +52,7 @@ int linktonode(cTopology* _topo,cPhyLink* _p_phy_link,pair<ID,ID>& _node_pair)
 	return 0;
 }
 
-int nodeRanking(map<ID,cPhyNode*> _phyNode_point_map, map<pair<ID,ID>,cPhyLink*> _phyLink_point_map,multimap<res_unit, cPhyNode*>& _node_ranking_mulmap)
+int nodeRanking(map<ID,cPhyNode*> _phyNode_point_map,multimap<res_unit, cPhyNode*>& _node_ranking_mulmap)
 {
 	_node_ranking_mulmap.clear();
 	res_unit residual_resource_ranking = 0;
@@ -91,18 +91,18 @@ int requestRearranging(cRequest* _request,multimap<res_unit,cVirtFuncApp*>& _vnf
 	return 0;
 }
 
-int nodeMapping(cRequest* _request,cTopology* _topo)
+int vnfMapping(cRequest* _request,map<ID,cPhyNode*>& _phy_node_point_map,map<pair<ID,ID>,cPhyLink*>& _phy_link_point_map)
 {
 	multimap<res_unit,cPhyNode*> node_ranking_mulmap;
 	//rearrange the nodes with the ascending order according to their residual resources.
-	nodeRanking(_topo->p_phyNode_point_map,_topo->p_phyLink_point_map,node_ranking_mulmap);
+	nodeRanking(_phy_node_point_map,node_ranking_mulmap);
 
 	//rearrange the vnfs belonging to the current request with the ascending order according to number of resources they required.
 	multimap<res_unit,cVirtFuncApp*> vnf_ranking_mulmap;
 	requestRearranging(_request,vnf_ranking_mulmap);
 
 	multimap<res_unit,cPhyNode*>::reverse_iterator riter_phy_node = node_ranking_mulmap.rbegin();
-		
+
 	multimap<res_unit,cVirtFuncApp*>::reverse_iterator riter_vnf = vnf_ranking_mulmap.rbegin();
 
 	while (riter_phy_node != node_ranking_mulmap.rend())	
@@ -143,7 +143,289 @@ int nodeMapping(cRequest* _request,cTopology* _topo)
 
 	//have not found enough resources for the current request
 	return 1;
+}
 
+int updateVnfInfo(cRequest* _request,cVirtFuncApp* _vnf,map<ID,cPhyNode*>& _host_node)
+{
+	uint splitting_count = _host_node.size();
+
+	map<ID,cPhyNode*>::iterator iter_found_phy_node_map = _host_node.begin();
+
+	if (splitting_count == 1)
+	{
+		//Set the host server info
+		_vnf->setHostServerID(iter_found_phy_node_map->second->getId());
+		_vnf->setHostServerPoint(iter_found_phy_node_map->second);
+		return 0;
+	}
+	else
+	{
+		uint splitting_node_index = 1;
+		uint splitting_link_index = 1;
+		ID vnf_orignal_id = _vnf->getId();
+		res_unit parent_node_resource_required = _vnf->getResRequired();
+		int parent_type = _vnf->getVirtFuncAppType();
+		ID parent_node_id = _vnf->getId();
+		for (splitting_node_index = 1;iter_found_phy_node_map != _host_node.end();iter_found_phy_node_map++,splitting_node_index++)
+		{
+			//Create a new vnf as a sub-vnf of the current vnf
+			cVirtFuncApp tem_vnf(*(_vnf));
+			_request->vir_func_app.push_back(tem_vnf);
+
+			//The point to the just inserted vnf
+			cVirtFuncApp* p_inserted_vnf = &(*(_request->vir_func_app.rbegin()));
+
+			//Update the info for the just inserted vnf
+			p_inserted_vnf->setId((ID)(parent_node_id*100 + splitting_node_index));	
+			p_inserted_vnf->setHostServerID(iter_found_phy_node_map->second->getId());
+			p_inserted_vnf->setHostServerPoint(iter_found_phy_node_map->second);
+			p_inserted_vnf->setParentID(parent_node_id);
+			p_inserted_vnf->setResRequired(parent_node_resource_required/splitting_count);
+
+
+
+			//Split each adjacent link of the vnf to be split
+			map<pair<ID,ID>,cVirtLink*>::iterator iter_adjacent_link_map = p_inserted_vnf->adjacent_link_map.begin();
+			for (;iter_adjacent_link_map != p_inserted_vnf->adjacent_link_map.end();iter_adjacent_link_map++)
+			{
+				cAppChain* point_app_chain = (cAppChain*)(iter_adjacent_link_map->second);
+
+				ID app_chain_original_id = point_app_chain->getId();
+				res_unit app_chain_original_resource_required = point_app_chain->getResRequired();
+				
+				for (splitting_link_index = 1;splitting_link_index < splitting_count;splitting_link_index++)
+				{
+					cAppChain tem_app_chain(*point_app_chain);
+					_request->app_chain.push_back(tem_app_chain);
+
+					//The point to the just inserted app chain
+					cAppChain* p_inserted_app_chain = &(*(_request->app_chain.rbegin()));
+
+					//Update the info for the just inserted app chain
+					p_inserted_app_chain->setId(app_chain_original_id*100+splitting_link_index);
+					p_inserted_app_chain->setParentID(app_chain_original_id);
+					p_inserted_app_chain->setResRequied(floor((double)app_chain_original_resource_required/splitting_count));
+
+					//Update the src node and des node info
+					if (iter_adjacent_link_map->first.second == _vnf->getId())
+					{
+						//The link is ended at this vnf.
+						p_inserted_app_chain->setEndDesNodeID(p_inserted_vnf->getId());
+						p_inserted_app_chain->setEndDesNode(p_inserted_vnf);
+					}
+					else
+					{
+						//The link is started at this vnf
+						p_inserted_app_chain->setEndSrcNodeID(p_inserted_vnf->getId());
+						p_inserted_app_chain->setEndSrcNode(p_inserted_vnf);
+
+					}
+
+					//Add this newly created app chain into the adjacent link list of both the src node and the des node.
+					p_inserted_vnf->adjacent_link_map.insert(make_pair(make_pair(p_inserted_app_chain->getEndSrcNodeID(),p_inserted_app_chain->getEndDesNodeID()),(cVirtLink*)p_inserted_app_chain));
+
+
+					((cVirtNode*)(iter_adjacent_link_map->second->getEndSrcNode()))->adjacent_link_map.insert(make_pair(make_pair(p_inserted_app_chain->getEndSrcNodeID(),p_inserted_app_chain->getEndDesNodeID()),(cVirtLink*)p_inserted_app_chain));
+					_request->vnf_chain_map.insert(make_pair(make_pair(p_inserted_app_chain->getEndSrcNodeID(),p_inserted_app_chain->getEndDesNodeID()),p_inserted_app_chain));
+					
+				}
+				point_app_chain->setSplit(true);
+			}
+		}
+		_vnf->setSplit(true);
+	}
+	
+	return 0;
+}
+
+int updateAvailableNode(map<ID,cPhyNode*>& _available_node_point_map,map<ID,cPhyNode*>& _host_node_point_map)
+{
+	map<ID,cPhyNode*>::iterator iter_host_node_point_map = _host_node_point_map.begin();
+	map<ID,cPhyNode*>::iterator fiter_phy_node_point_map;
+	for (;iter_host_node_point_map != _host_node_point_map.end();iter_host_node_point_map++)
+	{
+		fiter_phy_node_point_map = _available_node_point_map.find(iter_host_node_point_map->first);
+		if (fiter_phy_node_point_map == _available_node_point_map.end())
+		{
+			cout<<"Error!!! Can not remove the physical node that already used by other vnf"<<endl;
+			exit(0);
+		}
+		_available_node_point_map.erase(fiter_phy_node_point_map);
+	}
+	
+	return 0;
+}
+
+int clearAdjacentLink(cRequest* _request,cVirtNode* _p_vir_node)
+{
+	map<pair<ID,ID>,cVirtLink*>::iterator iter_adjacent_link_map = _p_vir_node->adjacent_link_map.begin();
+	map<pair<ID,ID>,cAppChain*>::iterator iter_indicate_removed_adjacent_link;
+
+	while (iter_adjacent_link_map != _p_vir_node->adjacent_link_map.end())
+	{
+		iter_indicate_removed_adjacent_link = _request->vnf_chain_map.find(make_pair(iter_adjacent_link_map->first.first,iter_adjacent_link_map->first.second));
+		if (iter_indicate_removed_adjacent_link == _request->vnf_chain_map.end())
+		{
+			//This adjacent link should be deleted
+			iter_adjacent_link_map++;
+			_p_vir_node->adjacent_link_map.erase(make_pair(iter_adjacent_link_map->first.first,iter_adjacent_link_map->first.second));
+		}
+	}
+	
+	
+	return 0;
+}
+
+int removeSplitVnfAppChain(cRequest* _request)
+{
+	
+	//Clean the vnf chain
+	map<pair<ID,ID>,cAppChain*>::iterator iter_vnf_chain_map = _request->vnf_chain_map.begin();
+	map<pair<ID,ID>,cAppChain*>::iterator iter_indicate_removed_vnf_chain;
+	while (iter_vnf_chain_map != _request->vnf_chain_map.end())
+	{
+		if (iter_vnf_chain_map->second->isSplit())
+		{
+			iter_indicate_removed_vnf_chain = iter_vnf_chain_map;
+			iter_vnf_chain_map++;
+			_request->vnf_chain_map.erase(iter_indicate_removed_vnf_chain);
+		}
+	}
+	
+	//Clean the app chain
+	list<cAppChain>::iterator iter_app_chain_list = _request->app_chain.begin();
+	list<cAppChain>::iterator iter_indicate_removed_app_chain;
+	while (iter_app_chain_list != _request->app_chain.end())
+	{	
+
+		if (iter_app_chain_list->isSplit())
+		{
+			iter_indicate_removed_app_chain = iter_app_chain_list;
+			iter_app_chain_list++;
+			_request->app_chain.erase(iter_indicate_removed_app_chain);
+
+			//Clean the adjacent link
+			cVirtNode* src_node_point = (cVirtNode*)(iter_app_chain_list->getEndSrcNode());
+			cVirtNode* des_node_point = (cVirtNode*)(iter_app_chain_list->getEndDesNode());
+			clearAdjacentLink(_request,src_node_point);
+			clearAdjacentLink(_request,des_node_point);
+		}
+
+
+	}
+	
+	//Clean the vnf
+	list<cVirtFuncApp>::iterator iter_vnf_list = _request->vir_func_app.begin();
+	list<cVirtFuncApp>::iterator iter_indicate_removed_vnf;
+	while(iter_vnf_list != _request->vir_func_app.end())
+	{
+		if (iter_vnf_list->isSplit())
+		{
+			iter_indicate_removed_vnf = iter_vnf_list;
+			iter_vnf_list++;
+			_request->vir_func_app.erase(iter_indicate_removed_vnf);
+		}
+	}	
+	
+	return 0;
+}
+
+int onevnfMapping(cRequest* _request,cVirtFuncApp* _p_vnf,map<ID,cPhyNode*>& _available_node_point_map)
+{
+	uint splitting_count = 1;
+	map<ID,cPhyNode*> host_node_point_map;
+	
+	//Find enough number of physical servers from available physical servers already used.
+	for (splitting_count = 1;splitting_count <= max_splitting_piece; splitting_count++)
+	{
+		host_node_point_map.clear();
+
+		multimap<res_unit,cPhyNode*> node_ranking_mulmap;
+		//rearrange the nodes with the ascending order according to their residual resources.
+		nodeRanking(_available_node_point_map,node_ranking_mulmap);
+
+		multimap<res_unit,cPhyNode*>::reverse_iterator riter_phy_node = node_ranking_mulmap.rbegin();
+		for (;riter_phy_node != node_ranking_mulmap.rend();riter_phy_node++)
+		{
+			if (riter_phy_node->second->havingSufficientRes(_p_vnf->getResRequired()/splitting_count))
+			{
+				//The physical node has sufficient resources to support the vnf
+				host_node_point_map.insert(make_pair(riter_phy_node->second->getId(),riter_phy_node->second));
+			}
+
+			if (host_node_point_map.size() == splitting_count)
+			{
+				//Enough number of physical nodes having sufficient resources is found
+				//When the size of host_node_point_map is larger than 1, the vnf will be split and deployed 
+				//onto multiple physical nodes.
+				updateVnfInfo(_request,_p_vnf,host_node_point_map);
+				updateAvailableNode(_available_node_point_map,host_node_point_map);
+				removeSplitVnfAppChain(_request);
+				return 0;
+			}
+		}
+	}
+	
+	//Can not find enough resource from the specified set of physical servers
+	return 1;
+}
+
+int vnfMappingwithSplitting(cRequest* _request,cTopology* _topo)
+{
+
+	//Since vnfs belonging to the same request can not be place on the same physical server
+	//the info of all physical servers should be first stored.
+	map<ID,cPhyNode*> available_used_physical_node;
+	available_used_physical_node.insert(_topo->used_phyNode_point_map.begin(),_topo->used_phyNode_point_map.end());
+
+	map<ID,cPhyNode*> available_unused_physical_node;
+	available_unused_physical_node.insert(_topo->unused_phyNode_point_map.begin(),_topo->unused_phyNode_point_map.end());
+
+	//rearrange the vnfs belonging to the current request with the ascending order according to number of resources they required.
+	multimap<res_unit,cVirtFuncApp*> vnf_ranking_mulmap;
+	requestRearranging(_request,vnf_ranking_mulmap);
+	multimap<res_unit,cVirtFuncApp*>::reverse_iterator riter_vnf_ranking_mulmap = vnf_ranking_mulmap.rbegin();
+
+	for (;riter_vnf_ranking_mulmap != vnf_ranking_mulmap.rend();riter_vnf_ranking_mulmap++)
+	{
+		//First check the available physical servers already used.
+		if (!onevnfMapping(_request,riter_vnf_ranking_mulmap->second,available_used_physical_node))
+		{
+			//Find enough resources from used physical server
+		}
+		else
+		{
+			//Try to find resources from unused physical servers
+			if (!onevnfMapping(_request,riter_vnf_ranking_mulmap->second,available_unused_physical_node))
+			{
+				//Find enough resources from unused physical server
+				return 0;
+			}
+			else
+			{
+				return 1;
+			}
+		}
+
+	}
+
+	//The function will never be returned from here.
+	return 1;
+}
+
+
+int nodeMapping(cRequest* _request,cTopology* _topo)
+{
+
+	if (splitting == false)
+	{
+		return vnfMapping(_request,_topo->p_phyNode_point_map,_topo->p_phyLink_point_map);
+	}
+	else
+	{
+		return vnfMappingwithSplitting(_request,_topo);
+	}
+	
 }
 
 int storeTopoInfo(cTopology* _topo,vector<res_unit>* _p_store_residual)
