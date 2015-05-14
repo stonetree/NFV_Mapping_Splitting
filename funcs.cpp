@@ -166,11 +166,13 @@ int updateVnfInfo(cRequest* _request,cVirtFuncApp* _vnf,map<ID,cPhyNode*>& _host
 		res_unit parent_node_resource_required = _vnf->getResRequired();
 		int parent_type = _vnf->getVirtFuncAppType();
 		ID parent_node_id = _vnf->getId();
+		ID base_node_ID = _vnf->getId()*100;
 		for (splitting_node_index = 1;iter_found_phy_node_map != _host_node.end();iter_found_phy_node_map++,splitting_node_index++)
 		{
 			//Create a new vnf as a sub-vnf of the current vnf
 			cVirtFuncApp tem_vnf(*(_vnf));
 			_request->vir_func_app.push_back(tem_vnf);
+			_vnf->setSplit(true);
 
 			//The point to the just inserted vnf
 			cVirtFuncApp* p_inserted_vnf = &(*(_request->vir_func_app.rbegin()));
@@ -181,58 +183,66 @@ int updateVnfInfo(cRequest* _request,cVirtFuncApp* _vnf,map<ID,cPhyNode*>& _host
 			p_inserted_vnf->setHostServerPoint(iter_found_phy_node_map->second);
 			p_inserted_vnf->setParentID(parent_node_id);
 			p_inserted_vnf->setResRequired(parent_node_resource_required/splitting_count);
+			p_inserted_vnf->setSplit(false);
 
 
 
 			//Split each adjacent link of the vnf to be split
-			map<pair<ID,ID>,cVirtLink*>::iterator iter_adjacent_link_map = p_inserted_vnf->adjacent_link_map.begin();
-			for (;iter_adjacent_link_map != p_inserted_vnf->adjacent_link_map.end();iter_adjacent_link_map++)
+
+			map<pair<ID,ID>,cVirtLink*> adjacent_link_point;
+			adjacent_link_point.insert(p_inserted_vnf->adjacent_link_map.begin(),p_inserted_vnf->adjacent_link_map.end());
+			map<pair<ID,ID>,cVirtLink*>::iterator iter_adjacent_link_point = adjacent_link_point.begin();
+
+			//map<pair<ID,ID>,cVirtLink*>::iterator iter_adjacent_link_map = p_inserted_vnf->adjacent_link_map.begin();
+			for (;iter_adjacent_link_point != adjacent_link_point.end();iter_adjacent_link_point++)
+			//for (;iter_adjacent_link_map != p_inserted_vnf->adjacent_link_map.end();iter_adjacent_link_map++)
 			{
-				cAppChain* point_app_chain = (cAppChain*)(iter_adjacent_link_map->second);
+				//cAppChain* point_app_chain = (cAppChain*)(iter_adjacent_link_map->second);
+				cAppChain* point_app_chain = (cAppChain*)(iter_adjacent_link_point->second);
+				point_app_chain->setSplit(true);
 
 				ID app_chain_original_id = point_app_chain->getId();
 				res_unit app_chain_original_resource_required = point_app_chain->getResRequired();
-				
-				for (splitting_link_index = 1;splitting_link_index < splitting_count;splitting_link_index++)
+
+				cAppChain tem_app_chain(*point_app_chain);
+				_request->app_chain.push_back(tem_app_chain);
+
+				//The point to the just inserted app chain
+				cAppChain* p_inserted_app_chain = &(*(_request->app_chain.rbegin()));
+
+				//Update the info for the just inserted app chain
+				p_inserted_app_chain->setId(base_node_ID+splitting_node_index);
+				p_inserted_app_chain->setParentID(app_chain_original_id);
+				p_inserted_app_chain->setResRequied(app_chain_original_resource_required/splitting_count);
+				p_inserted_app_chain->setSplit(false);
+
+				//Update the src node and des node info
+				if (iter_adjacent_link_point->first.second == _vnf->getId())
 				{
-					cAppChain tem_app_chain(*point_app_chain);
-					_request->app_chain.push_back(tem_app_chain);
-
-					//The point to the just inserted app chain
-					cAppChain* p_inserted_app_chain = &(*(_request->app_chain.rbegin()));
-
-					//Update the info for the just inserted app chain
-					p_inserted_app_chain->setId(app_chain_original_id*100+splitting_link_index);
-					p_inserted_app_chain->setParentID(app_chain_original_id);
-					p_inserted_app_chain->setResRequied(floor((double)app_chain_original_resource_required/splitting_count));
-
-					//Update the src node and des node info
-					if (iter_adjacent_link_map->first.second == _vnf->getId())
-					{
-						//The link is ended at this vnf.
-						p_inserted_app_chain->setEndDesNodeID(p_inserted_vnf->getId());
-						p_inserted_app_chain->setEndDesNode(p_inserted_vnf);
-					}
-					else
-					{
-						//The link is started at this vnf
-						p_inserted_app_chain->setEndSrcNodeID(p_inserted_vnf->getId());
-						p_inserted_app_chain->setEndSrcNode(p_inserted_vnf);
-
-					}
-
-					//Add this newly created app chain into the adjacent link list of both the src node and the des node.
-					p_inserted_vnf->adjacent_link_map.insert(make_pair(make_pair(p_inserted_app_chain->getEndSrcNodeID(),p_inserted_app_chain->getEndDesNodeID()),(cVirtLink*)p_inserted_app_chain));
-
-
-					((cVirtNode*)(iter_adjacent_link_map->second->getEndSrcNode()))->adjacent_link_map.insert(make_pair(make_pair(p_inserted_app_chain->getEndSrcNodeID(),p_inserted_app_chain->getEndDesNodeID()),(cVirtLink*)p_inserted_app_chain));
-					_request->vnf_chain_map.insert(make_pair(make_pair(p_inserted_app_chain->getEndSrcNodeID(),p_inserted_app_chain->getEndDesNodeID()),p_inserted_app_chain));
+					//The link is ended at this vnf.
+					p_inserted_app_chain->setEndDesNodeID(p_inserted_vnf->getId());
+					p_inserted_app_chain->setEndDesNode(p_inserted_vnf);
 					
+					((cVirtNode*)(iter_adjacent_link_point->second->getEndSrcNode()))->adjacent_link_map.insert(make_pair(make_pair(p_inserted_app_chain->getEndSrcNodeID(),p_inserted_app_chain->getEndDesNodeID()),(cVirtLink*)p_inserted_app_chain));
 				}
-				point_app_chain->setSplit(true);
+				else
+				{
+					//The link is started at this vnf
+					p_inserted_app_chain->setEndSrcNodeID(p_inserted_vnf->getId());
+					p_inserted_app_chain->setEndSrcNode(p_inserted_vnf);
+					
+					((cVirtNode*)(iter_adjacent_link_point->second->getEndDesNode()))->adjacent_link_map.insert(make_pair(make_pair(p_inserted_app_chain->getEndSrcNodeID(),p_inserted_app_chain->getEndDesNodeID()),(cVirtLink*)p_inserted_app_chain));
+
+				}
+
+				//Add this newly created app chain into the adjacent link list of both the src node and the des node.
+	
+				p_inserted_vnf->adjacent_link_map.insert(make_pair(make_pair(p_inserted_app_chain->getEndSrcNodeID(),p_inserted_app_chain->getEndDesNodeID()),(cVirtLink*)p_inserted_app_chain));
+
+				_request->vnf_chain_map.insert(make_pair(make_pair(p_inserted_app_chain->getEndSrcNodeID(),p_inserted_app_chain->getEndDesNodeID()),p_inserted_app_chain));
+					
 			}
 		}
-		_vnf->setSplit(true);
 	}
 	
 	return 0;
@@ -267,8 +277,14 @@ int clearAdjacentLink(cRequest* _request,cVirtNode* _p_vir_node)
 		if (iter_indicate_removed_adjacent_link == _request->vnf_chain_map.end())
 		{
 			//This adjacent link should be deleted
+			ID src_node_id = iter_adjacent_link_map->first.first;
+			ID des_node_id = iter_adjacent_link_map->first.second;
 			iter_adjacent_link_map++;
-			_p_vir_node->adjacent_link_map.erase(make_pair(iter_adjacent_link_map->first.first,iter_adjacent_link_map->first.second));
+			_p_vir_node->adjacent_link_map.erase(make_pair(src_node_id,des_node_id));
+		}
+		else
+		{
+			iter_adjacent_link_map++;
 		}
 	}
 	
@@ -290,6 +306,10 @@ int removeSplitVnfAppChain(cRequest* _request)
 			iter_vnf_chain_map++;
 			_request->vnf_chain_map.erase(iter_indicate_removed_vnf_chain);
 		}
+		else
+		{
+			iter_vnf_chain_map++;
+		}
 	}
 	
 	//Clean the app chain
@@ -301,14 +321,19 @@ int removeSplitVnfAppChain(cRequest* _request)
 		if (iter_app_chain_list->isSplit())
 		{
 			iter_indicate_removed_app_chain = iter_app_chain_list;
-			iter_app_chain_list++;
-			_request->app_chain.erase(iter_indicate_removed_app_chain);
 
 			//Clean the adjacent link
-			cVirtNode* src_node_point = (cVirtNode*)(iter_app_chain_list->getEndSrcNode());
-			cVirtNode* des_node_point = (cVirtNode*)(iter_app_chain_list->getEndDesNode());
+			cVirtNode* src_node_point = (cVirtNode*)(iter_indicate_removed_app_chain->getEndSrcNode());
+			cVirtNode* des_node_point = (cVirtNode*)(iter_indicate_removed_app_chain->getEndDesNode());
 			clearAdjacentLink(_request,src_node_point);
 			clearAdjacentLink(_request,des_node_point);
+			
+			iter_app_chain_list++;
+			_request->app_chain.erase(iter_indicate_removed_app_chain);
+		}
+		else
+		{
+			iter_app_chain_list++;
 		}
 
 
@@ -324,6 +349,10 @@ int removeSplitVnfAppChain(cRequest* _request)
 			iter_indicate_removed_vnf = iter_vnf_list;
 			iter_vnf_list++;
 			_request->vir_func_app.erase(iter_indicate_removed_vnf);
+		}
+		else
+		{
+			iter_vnf_list++;
 		}
 	}	
 	
@@ -399,7 +428,8 @@ int vnfMappingwithSplitting(cRequest* _request,cTopology* _topo)
 			if (!onevnfMapping(_request,riter_vnf_ranking_mulmap->second,available_unused_physical_node))
 			{
 				//Find enough resources from unused physical server
-				return 0;
+				//Check the next vnf
+				continue;
 			}
 			else
 			{
@@ -409,8 +439,8 @@ int vnfMappingwithSplitting(cRequest* _request,cTopology* _topo)
 
 	}
 
-	//The function will never be returned from here.
-	return 1;
+	//Enough number of resources have found for the vnfs belonging to this request
+	return 0;
 }
 
 

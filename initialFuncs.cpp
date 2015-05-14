@@ -162,10 +162,10 @@ int initialRequests(list<cRequest>* _p_requests)
 		list<cAppChain>::iterator iter_app_chain = request.app_chain.begin();
 		for (;iter_app_chain != request.app_chain.end();iter_app_chain++)
 		{
-			//request.vnf_chain_map.insert(make_pair(make_pair(iter_app_chain->getEndSrcNodeID(),iter_app_chain->getEndDesNodeID()),&(*iter_app_chain)));
+			request.vnf_chain_map.insert(make_pair(make_pair(iter_app_chain->getEndSrcNodeID(),iter_app_chain->getEndDesNodeID()),&(*iter_app_chain)));
 			
-			((cVirtNode*)(iter_app_chain->getEndSrcNode()))->adjacent_link_map.insert(make_pair(make_pair(((cVirtNode*)(iter_app_chain->getEndSrcNode()))->getId(),((cVirtNode*)(iter_app_chain->getEndDesNode()))->getId()),(cVirtLink*)&(iter_app_chain)));
-			((cVirtNode*)(iter_app_chain->getEndDesNode()))->adjacent_link_map.insert(make_pair(make_pair(((cVirtNode*)(iter_app_chain->getEndSrcNode()))->getId(),((cVirtNode*)(iter_app_chain->getEndDesNode()))->getId()),(cVirtLink*)&(iter_app_chain)));
+			((cVirtNode*)(iter_app_chain->getEndSrcNode()))->adjacent_link_map.insert(make_pair(make_pair(((cVirtNode*)(iter_app_chain->getEndSrcNode()))->getId(),((cVirtNode*)(iter_app_chain->getEndDesNode()))->getId()),&(*iter_app_chain)));
+			((cVirtNode*)(iter_app_chain->getEndDesNode()))->adjacent_link_map.insert(make_pair(make_pair(((cVirtNode*)(iter_app_chain->getEndSrcNode()))->getId(),((cVirtNode*)(iter_app_chain->getEndDesNode()))->getId()),&(*iter_app_chain)));
 		}
 	}
 
