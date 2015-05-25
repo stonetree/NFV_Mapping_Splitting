@@ -20,8 +20,10 @@ extern const res_unit phy_server_capacity;
 extern const res_unit phy_link_capacity;
 extern const uint max_vnf;
 extern const res_unit max_link_request_required;
+extern const res_unit min_link_request_required;
 extern const res_unit max_node_request_required;
-extern const double arrival_rate;
+extern const res_unit min_node_request_required;
+extern double arrival_rate;
 extern const double departure_rate;
 extern const int max_distance;
 extern const bool splitting;
@@ -37,6 +39,8 @@ extern double accepted_rate;
 /* Global variables*/
 extern map<ID,cVirtFuncApp*> vnf_index_map;
 extern map<ID,cAppChain*> app_chain_index_map;
+extern res_unit total_node_resource_used;
+extern res_unit total_link_resource_used;
 /************************************************************************/
 
 /************************************************************************/
@@ -48,6 +52,8 @@ extern int initialEventList(list<cRequest>* _p_requests_list,multimap<double,cEv
 extern int requestAllocating(cTopology* _topo,cRequest* _request);
 //extern int requestAllocatingwithSplitting(cTopology* _topo,cRequest* _request);
 extern int releaseResource(cTopology* _topo,cRequest* _request);
+extern int outputResults(list<cRequest>* _p_requests_list, cTopology* _topo,double _last_time);
+extern void updateTopologyInfo(cTopology* _topo);
 /************************************************************************/
 
 

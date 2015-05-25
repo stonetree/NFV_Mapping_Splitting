@@ -133,9 +133,9 @@ int initialRequests(list<cRequest>* _p_requests)
 			vnf_resource_required = 0;
 			while(vnf_resource_required<1)
 			{
-				vnf_resource_required = (res_unit)(gsl_rng_uniform(r_vnf_resource_required)*max_node_request_required);
+				vnf_resource_required = (res_unit)(gsl_rng_uniform(r_vnf_resource_required)*(max_node_request_required - min_node_request_required) + min_node_request_required);
 			}
-			tem_request.vir_func_app.push_back(cVirtFuncApp(vnf_id,(ID)(reques_index+1),vnf_types,vnf_resource_required + 100));
+			tem_request.vir_func_app.push_back(cVirtFuncApp(vnf_id,(ID)(reques_index+1),vnf_types,vnf_resource_required));
 			vnf_id++;
 		}
 
@@ -151,7 +151,7 @@ int initialRequests(list<cRequest>* _p_requests)
 			app_chain_resource_required = 0;
 			while (app_chain_resource_required<1)
 			{
-				app_chain_resource_required = (res_unit)(gsl_rng_uniform(r_vnf_resource_required)*max_link_request_required);
+				app_chain_resource_required = (res_unit)(gsl_rng_uniform(r_vnf_resource_required)*(max_link_request_required - min_link_request_required) + min_link_request_required);
 			}
 
 			cAppChain tem_app_chain = cAppChain(app_chain_id,(ID)(reques_index+1),iter_vnf->getId(),iter_next_vnf->getId(),app_chain_resource_required,(cVirtNode*)(&(*iter_vnf)),(cVirtNode*)(&(*iter_next_vnf)));
